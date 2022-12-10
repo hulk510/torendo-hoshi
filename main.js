@@ -79,6 +79,7 @@ function main() {
   //     ...
   //   ]
   // }
+
   for (const trend of trends) {
     Logger.log(trend);
     sendTrendToDiscord(trend);
