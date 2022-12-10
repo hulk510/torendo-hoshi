@@ -24,21 +24,30 @@ $ cd <project_name>
 2. create clasp project
 
 ```
-$ clasp create
+$ clasp create --title "your-project-name"
 ? Create which script? standalone // standaloneを選択
 ```
 
 そうするとプロジェクト内に.clasp.jsonが作成されます。
 これが作成されるとclasp pushなどが動きます。
 
-3. run project
+3. open project
 ```
 $ clasp push
 $ clasp open
 ```
 GASのページが表示されます
-![authenticate](https://gyazo.com/9b8f84317cb030052594314b2f7a5936/raw)
+初回起動時は承認が求められるため承認してください。
 
-初回実行時権限が求められるため承認すると実行できるようになります。
-実行する場合は関数をmainにして実行します
-ここら辺はGASのチュートリアルとかでも検索できるため分からない場合は調べてみてください。
+4. setting script property
+
+- `ACCESS_TOKEN`(Twitter API)
+- `DISCORD_WEBHOOK_URL`(Discord Webhook)
+
+上記のプロパティが必要なので適宜取得して
+GASのスクリプトプロパティにセットしてください
+
+5. run project
+
+GAS上から実行してください。
+指定したDiscord Webhook URLにpostできれば完了です。
