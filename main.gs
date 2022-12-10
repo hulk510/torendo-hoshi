@@ -19,14 +19,11 @@ const DISCORD_WEBHOOK_URL = props.DISCORD_WEBHOOK_URL;
 function sendTrendToDiscord(trendData) {
   const name = trendData['name'] ?? '';
   const url = trendData.url ?? '';
-  const query = trendData.query ?? '';
-  const tweet_volume_str = trendData.tweet_volume.toLocaleString() ?? 0; // ちゃんとパースできるのか？Number(numString)
 
-  const content = '新しい投稿だよ！\r' + 'test';
   const payload = {
     username: 'TwitterTrendsBot',
     avatar_url: 'https://avatars.githubusercontent.com/u/50278?v=4', // twitterのpng
-    content: content, // MEMO: 上限2000文字
+    content: `現在のトレンドツイート\r${name}\r${url}`, // MEMO: 上限2000文字
   };
 
   /**
@@ -36,10 +33,11 @@ function sendTrendToDiscord(trendData) {
 
   const options = {
     method: 'post',
+    muteHttpExceptions: true,
     contentType: 'application/json',
     payload: JSON.stringify(payload),
   };
-  UrlFetchApp.fetch(discordWebhookUrl, options);
+  UrlFetchApp.fetch(DISCORD_WEBHOOK_URL, options);
 }
 
 /**
@@ -56,8 +54,8 @@ function fetchTwitterTrends() {
     },
   };
   const response = JSON.parse(UrlFetchApp.fetch(url, options));
-  Logger.log(response);
-  const data = response['trends'] ?? [];
+  // Logger.log(response);
+  const data = response[0]['trends'] ?? [];
   Logger.log(data);
   return data;
 }
@@ -82,6 +80,7 @@ function main() {
   //   ]
   // }
   for (const trend of trends) {
+    Logger.log(trend);
     sendTrendToDiscord(trend);
   }
 }
