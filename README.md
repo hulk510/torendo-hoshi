@@ -1,3 +1,5 @@
+# 概要
+TwitterAPIを使用してトレンド情報をDiscordに送信するGASプロジェクト
 # 環境構築
 - Node.js
 - @google/clasp
@@ -34,9 +36,9 @@ $ clasp create
 $ clasp push
 $ clasp open
 ```
-GASのページが表示されるため実行する
+GASのページが表示されます
+![authenticate](https://gyazo.com/9b8f84317cb030052594314b2f7a5936/raw)
 
-<img src="https://gyazo.com/8a15fa6a1aa58901addf96583b44f1fc" width="400" height="400" />
-
-権限が求められる場合は承認する
-
+初回実行時権限が求められるため承認すると実行できるようになります。
+実行する場合は関数をmainにして実行します
+ここら辺はGASのチュートリアルとかでも検索できるため分からない場合は調べてみてください。
