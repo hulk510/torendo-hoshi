@@ -22,7 +22,7 @@ function sendTrendToDiscord(trendName, trendUrl) {
   const embeds = [
     {
       title: `トレンドワード： ${trendName}`,
-      description: `${trendName}についてのツイートだよもっと見たい場合は上のリンクをクリックしてね`,
+      description: `${trendName}についてのツイートだよ。もっと見たい場合は上のリンクをクリックしてね`,
       url: trendUrl,
       color: 5620992,
       timestamp: new Date(),
@@ -129,7 +129,7 @@ function main() {
     const trendName = trend.name ?? '';
     const trendUrl = trend.url.replace('http', 'https') ?? ''; // MEMO: responseのurlはhttpなのでhttpsになるように変更
     sendTrendToDiscord(trendName, trendUrl);
-    Utilities.sleep(1000);
+    Utilities.sleep(500);
 
     const query = trend.query ?? '';
     tweets = fetchSearchTweet(query);
