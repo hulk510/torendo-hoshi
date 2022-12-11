@@ -16,7 +16,7 @@ const ACCESS_TOKEN = props.ACCESS_TOKEN;
 const DISCORD_WEBHOOK_URL = props.DISCORD_WEBHOOK_URL;
 
 /**
- * Discordへの通知処理
+ * Discordへのトレンド情報を通知処理
  */
 function sendTrendToDiscord(trendName, trendUrl) {
   const embeds = [
@@ -55,8 +55,10 @@ function sendTrendToDiscord(trendName, trendUrl) {
   UrlFetchApp.fetch(DISCORD_WEBHOOK_URL, options);
 }
 
+/**
+ * Discordへのツイート情報を通知処理
+ */
 function sendTweetToDiscord(tweet) {
-  Logger.log(tweet);
   const payload = {
     username: 'TwitterTrendBot',
     avatar_url: 'https://avatars.githubusercontent.com/u/50278?v=4', // twitterのpng
@@ -89,7 +91,22 @@ function fetchTwitterTrends() {
   return trends;
 }
 
+/**
+ * Twitter tweets fetch
+ */
 function fetchSearchTweet(query) {
+  /**
+   * twitterのsearch APIを使ってツイートを取得する
+   * 現在設定してるパラメーター
+   * q: 指定するキーワード
+   * count: 取得するツイート数
+   * result_type: 取得するツイートのタイプ（popular, mixed, recent）
+   * locale: 言語
+   * tweet_mode: 140字で省略される場合に全文表示するか（extendedで全文表示）
+   * include_entities: entitiesを含めるかどうか
+   * その他のクエリや詳細情報は以下リンク参照
+   * https://developer.twitter.com/en/docs/twitter-api/v1/tweets/search/api-reference/get-search-tweets
+   */
   const url = `${twitterSearchEndpoint}?q=${query}&count=1&result_type=mixed&locale=ja&tweet_mode=extended&include_entities=false`;
   const options = {
     method: 'get',
@@ -100,7 +117,7 @@ function fetchSearchTweet(query) {
   };
 
   const response = JSON.parse(UrlFetchApp.fetch(url, options));
-  const statuses = response['statuses'] ?? [];
+  const statuses = response['statuses'] ?? []; // responseのキーがstatusesなのでstatusesで取得
   return statuses;
 }
 
@@ -109,26 +126,32 @@ function fetchSearchTweet(query) {
  */
 function main() {
   const trends = fetchTwitterTrends();
-  // response example
-  // {
-  //   "trends": [
-  //     {
-  //       "name": "#GiftAGamer",
-  //       "url": "http://twitter.com/search?q=%23GiftAGamer",
-  //       "promoted_content": null,
-  //       "query": "%23GiftAGamer",
-  //       "tweet_volume": null
-  //     },
-  //     ...
-  //   ]
-  // }
+  /**
+   *   response example
+   * https://developer.twitter.com/en/docs/twitter-api/v1/trends/trends-for-location/api-reference/get-trends-place
+   *{
+   * "trends": [
+   *  {
+   *   "name": "#GiftAGamer",
+   *  "url": "http://twitter.com/search?q=%23GiftAGamer",
+   * "promoted_content": null,
+   *       "query": "%23GiftAGamer",
+   *      "tweet_volume": null
+   *   },
+   *  ...
+   *  ]
+   *}
+   */
   let index = 0;
   for (const trend of trends) {
-    if (index > 5) break;
+    // 4件以上のトピックは表示しない
+    if (index > 3) break;
     index++;
     const trendName = trend.name ?? '';
-    const trendUrl = trend.url.replace('http', 'https') ?? ''; // MEMO: responseのurlはhttpなのでhttpsになるように変更
+    // MEMO: responseのurlはhttpなのでhttpsになるように変更
+    const trendUrl = trend.url.replace('http', 'https') ?? '';
     sendTrendToDiscord(trendName, trendUrl);
+    // 遅延処理
     Utilities.sleep(500);
 
     const query = trend.query ?? '';
@@ -136,6 +159,7 @@ function main() {
     for (const tweet of tweets) {
       sendTweetToDiscord(tweet);
     }
+    // 遅延処理
     Utilities.sleep(3500);
   }
 }
