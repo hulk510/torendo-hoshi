@@ -4,8 +4,10 @@
 // https://developer.twitter.com/en/docs/twitter-api/v1/trends/locations-with-trending-topics/api-reference/get-trends-available
 // idは上記URLから取得可能なリストを取得できる
 // 23424856はjapanのparent id
-const twitterEndpoint =
+const twitterTrendEndpoint =
   'https://api.twitter.com/1.1/trends/place.json?id=23424856';
+
+const twitterSearchEndpoint = 'https://api.twitter.com/1.1/search/tweets.json';
 
 const props = PropertiesService.getScriptProperties().getProperties();
 // -- Twitter --
@@ -16,14 +18,27 @@ const DISCORD_WEBHOOK_URL = props.DISCORD_WEBHOOK_URL;
 /**
  * Discordへの通知処理
  */
-function sendTrendToDiscord(trendData) {
-  const name = trendData['name'] ?? '';
-  const url = trendData.url ?? '';
+function sendTrendToDiscord(trendName, trendUrl) {
+  const embeds = [
+    {
+      title: `トレンドワード： ${trendName}`,
+      description: `${trendName}についてのツイートだよもっと見たい場合は上のリンクをクリックしてね`,
+      url: trendUrl,
+      color: 5620992,
+      timestamp: new Date(),
+      author: {
+        name: 'Twitterトレンド紹介',
+        url: trendUrl,
+        icon_url: 'https://avatars.githubusercontent.com/u/50278?v=4',
+      },
+    },
+  ];
 
   const payload = {
     username: 'TwitterTrendsBot',
     avatar_url: 'https://avatars.githubusercontent.com/u/50278?v=4', // twitterのpng
-    content: `現在のトレンドツイート\r${name}\r${url}`, // MEMO: 上限2000文字
+    content: '', // MEMO: 上限2000文字
+    embeds: embeds,
   };
 
   /**
@@ -40,12 +55,28 @@ function sendTrendToDiscord(trendData) {
   UrlFetchApp.fetch(DISCORD_WEBHOOK_URL, options);
 }
 
+function sendTweetToDiscord(tweet) {
+  Logger.log(tweet);
+  const payload = {
+    username: 'TwitterTrendBot',
+    avatar_url: 'https://avatars.githubusercontent.com/u/50278?v=4', // twitterのpng
+    content: `https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`, // MEMO: 上限2000文字
+  };
+
+  const options = {
+    method: 'post',
+    muteHttpExceptions: true,
+    contentType: 'application/json',
+    payload: JSON.stringify(payload),
+  };
+  UrlFetchApp.fetch(DISCORD_WEBHOOK_URL, options);
+}
+
 /**
  * Twitter trends fetch
  */
 function fetchTwitterTrends() {
-  const url = twitterEndpoint;
-  Logger.log(url);
+  const url = twitterTrendEndpoint;
   const options = {
     method: 'get',
     muteHttpExceptions: true,
@@ -54,10 +85,23 @@ function fetchTwitterTrends() {
     },
   };
   const response = JSON.parse(UrlFetchApp.fetch(url, options));
-  // Logger.log(response);
-  const data = response[0]['trends'] ?? [];
-  Logger.log(data);
-  return data;
+  const trends = response[0]['trends'] ?? [];
+  return trends;
+}
+
+function fetchSearchTweet(query) {
+  const url = `${twitterSearchEndpoint}?q=${query}&count=1&result_type=mixed&locale=ja&tweet_mode=extended&include_entities=false`;
+  const options = {
+    method: 'get',
+    muteHttpExceptions: true,
+    headers: {
+      authorization: 'Bearer ' + ACCESS_TOKEN,
+    },
+  };
+
+  const response = JSON.parse(UrlFetchApp.fetch(url, options));
+  const statuses = response['statuses'] ?? [];
+  return statuses;
 }
 
 /**
@@ -65,7 +109,6 @@ function fetchTwitterTrends() {
  */
 function main() {
   const trends = fetchTwitterTrends();
-
   // response example
   // {
   //   "trends": [
@@ -79,9 +122,20 @@ function main() {
   //     ...
   //   ]
   // }
-
+  let index = 0;
   for (const trend of trends) {
-    Logger.log(trend);
-    sendTrendToDiscord(trend);
+    if (index > 5) break;
+    index++;
+    const trendName = trend.name ?? '';
+    const trendUrl = trend.url.replace('http', 'https') ?? ''; // MEMO: responseのurlはhttpなのでhttpsになるように変更
+    sendTrendToDiscord(trendName, trendUrl);
+    Utilities.sleep(1000);
+
+    const query = trend.query ?? '';
+    tweets = fetchSearchTweet(query);
+    for (const tweet of tweets) {
+      sendTweetToDiscord(tweet);
+    }
+    Utilities.sleep(3500);
   }
 }
